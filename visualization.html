@@ -1,0 +1,419 @@
+<head>
+  	<!-- Plotly.js -->
+	<script src="plotly-latest.min.js"></script>
+<!--    	<script src="https://cdn.plot.ly/plotly-latest.min.js"></script> -->
+  	<script>
+	
+	const ACCEL_MAX_POINTS = 500;
+	const GPS_MAX_POINTS = 500;
+	const PPG_MAX_POINTS = 250;
+	const HR_MAX_POINTS = 250;
+	const TIME_INDEX = 0;
+	const X_INDEX = 1;
+	const Y_INDEX = 2;
+	const Z_INDEX = 3;
+	
+	const STEP_EVENT_INDEX = 1;
+	const PPG_INDEX = 1;
+	const HR_INDEX = 1;
+	const LAT_INDEX = 1;
+	const LONG_INDEX = 2;
+	
+	function getQueryVariable(variable)
+	{
+       var query = window.location.search.substring(1);
+       var vars = query.split("&");
+       for (var i=0;i<vars.length;i++) {
+               var pair = vars[i].split("=");
+               if(pair[0] == variable){return pair[1];}
+       }
+       return(false);
+	}
+	
+	const USER_ID = ""; // TODO: Change user ID
+	const BOGUS_VAL = 10;
+	
+	var ws = new WebSocket("ws://none.cs.umass.edu:8080/");
+	
+
+	var d = new Date();
+	var start = d.getTime();  
+	
+	var accel_vals = [ [d], [], [], [] ];
+	var gps_vals = [ [d], [], [] ];
+	var ppg_vals = [ [d], [] ];
+	var hr_vals = [ [d], [] ];
+	var step_event_vals = [ [], [] ];
+	
+	
+	var map;
+	
+	// var locations = {
+//     	type: 'FeatureCollection',
+//         features: [
+//         	// {
+// //           		type: 'Feature',
+// //           		geometry: {type: 'Point', coordinates: [-87.650, 41.850]},
+// //           		properties: {name: 'Chicago'}
+// //         	}, {
+// //           		type: 'Feature',
+// //           		geometry: {type: 'Point', coordinates: [-149.900, 61.218]},
+// //           		properties: {name: 'Anchorage'}
+// //         	}, {
+// //           		type: 'Feature',
+// //           		geometry: {type: 'Point', coordinates: [-99.127, 19.427]},
+// //           		properties: {name: 'Mexico City'}
+// //         	}
+//         ]
+//       };
+	
+    function initMap() {
+    	map = new google.maps.Map(document.getElementById('map'), {
+        	zoom: 12,
+        	center: {lat: 42.39, lng: -72.53}, //UMass CS building
+        	mapTypeControl: false,
+        	styles: [
+            {
+              featureType: 'all',
+              stylers: [
+                { saturation: -30 }
+              ]
+            },{
+              featureType: 'road.arterial',
+              elementType: 'geometry',
+              stylers: [
+                { hue: '#00ffee' },
+                { saturation: 50 }, 
+                { visibility: 'off'}
+              ]
+            },{
+              featureType: 'poi',
+              elementType: 'labels',
+              stylers: [
+                { visibility: 'off' }
+              ]
+            },{
+              featureType: 'road',
+              elementType: 'labels',
+              stylers: [
+                { visibility: 'off' }
+              ]
+            }
+          ]
+    	});
+        
+    	map.data.setStyle(function(feature) {
+        	return {
+        		title: feature.getProperty('name'),
+        		optimized: true
+        	};
+    	});
+//     	map.data.addGeoJson(locations);
+    }
+	
+	
+	
+	//websocket boilerplate
+	ws.onopen = function() {
+	    console.log("Opened!");
+	    console.log("ID," + USER_ID);
+		ws.send("Hi, server!");
+	    ws.send("ID," + USER_ID );
+	};
+	ws.onclose = function() {
+	    console.log("Closed!");
+	};
+	ws.onerror = function(err) {
+	    console.log("Error: " + err);
+	};
+
+	//message ingestion
+	ws.onmessage = function (evt) {
+//   		console.log("Received something...");
+		var data = evt.data;		
+// 		console.log("Message: " + data);
+		var obj = JSON.parse(data);
+		
+		if (obj.user_id != USER_ID) {
+			return;
+		}
+		
+//  		console.log("Received data: " + obj.sensor_type);
+		//sensor event: direct to appropriate handler
+		if (obj.sensor_type == "SENSOR_ACCEL") {
+			accel_handler(obj.data);
+		}
+		else if (obj.sensor_type == "SENSOR_GPS") {
+			gps_handler(obj.data);
+		}
+		else if (obj.sensor_type == "SENSOR_PPG") {
+			ppg_handler(obj.data);
+		}
+		else if (obj.sensor_type == "SENSOR_HR") {
+			hr_handler(obj.data);
+		}
+		else if (obj.sensor_type == "SENSOR_SERVER_MESSAGE") {
+			msg = obj.message;
+			if (msg == "SENSOR_STEP") {
+				step_event_handler(obj.data);
+			}
+		}
+	};
+	
+	function accel_handler(accel_data) {
+// 	 	console.log("Received accel data.");
+		if (accel_vals[0].length > ACCEL_MAX_POINTS) {
+			for (i = 0; i < 4; i++) {
+				accel_vals[i].splice(0, 1);
+			}
+		}
+		
+		while (step_event_vals[0][0] < accel_vals[0][0]) {
+			for (i = 0; i < 2; i++) {
+				step_event_vals[i].splice(0, 1);
+			}
+		}
+		
+		accel_vals[TIME_INDEX].push(new Date(accel_data.t));
+		accel_vals[X_INDEX].push(accel_data.x);
+		accel_vals[Y_INDEX].push(accel_data.y);
+		accel_vals[Z_INDEX].push(accel_data.z);		
+	}
+	
+	function gps_handler(gps_data) {
+		// if (gps_vals[0].length > GPS_MAX_POINTS) {
+// 			for (i = 0; i < 3; i++) {
+// 				gps_vals[i].splice(0, 1);
+// 			}
+// 		}
+		console.log("lat: " + gps_data.latitude)
+		console.log("long: " + gps_data.longitude)
+        
+        var marker = new google.maps.Marker({
+    		position: {lat: gps_data.latitude, lng: gps_data.longitude},
+    		title:"Location"
+		});
+
+		// To add the marker to the map, call setMap();
+		marker.setMap(map);
+		
+		// gps_vals[TIME_INDEX].push(new Date(gps_data.t));
+// 		gps_vals[X_INDEX].push(gps_data.latitude);
+// 		gps_vals[Y_INDEX].push(gps_data.longitude);
+	}
+	
+	function ppg_handler(ppg_data) {
+		if (ppg_vals[0].length > PPG_MAX_POINTS) {
+			for (i = 0; i < 2; i++) {
+				ppg_vals[i].splice(0, 1);
+			}
+		}
+		ppg_vals[TIME_INDEX].push(ppg_data.t);
+		ppg_vals[PPG_INDEX].push(ppg_data.value);		
+	}
+	
+	function hr_handler(hr_data) {
+		if (hr_vals[0].length > HR_MAX_POINTS) {
+			for (i = 0; i < 2; i++) {
+				hr_vals[i].splice(0, 1);
+			}
+		}
+		while (hr_vals[0][0] < ppg_vals[0][0]) {
+			for (i = 0; i < 2; i++) {
+				hr_vals[i].splice(0, 1);
+			}
+		}
+		hr_vals[TIME_INDEX].push(hr_data.t);
+		hr_vals[HR_INDEX].push(hr_data.value);		
+	}
+	
+	function step_event_handler(step_event_data) {
+		console.log("Step event: " + step_event_data.timestamp);
+		
+		while (step_event_vals[0][0] < accel_vals[0][0]) {
+			for (i = 0; i < 2; i++) {
+				step_event_vals[i].splice(0, 1);
+			}
+		}
+		step_event_vals[TIME_INDEX].push(step_event_data.timestamp);
+		step_event_vals[STEP_EVENT_INDEX].push(BOGUS_VAL); //TODO
+	}
+	
+	//visualization code
+	function init_plot(plot_div){
+		//accel
+		if (plot_div.id === 'accelDiv'){
+			var x_trace = {
+				x: accel_vals[TIME_INDEX], 
+				y: accel_vals[X_INDEX], 
+				type: 'scatter',
+				name: 'x axis'
+			};
+			var y_trace = {
+				x: accel_vals[TIME_INDEX],
+				y: accel_vals[Y_INDEX],
+				type: 'scatter',
+				name: 'y axis'
+			};
+			var z_trace = {
+				x: accel_vals[TIME_INDEX],
+				y: accel_vals[Z_INDEX],
+				type: 'scatter',
+				name: 'z axis'
+			};
+			var step_trace = {
+				x: step_event_vals[TIME_INDEX],
+				y: step_event_vals[STEP_EVENT_INDEX],
+				type: 'scatter',
+				mode: 'markers',
+				marker: {
+					size: 20,
+					opacity: 0.4,
+					line: {
+						width: 2
+					}
+				},
+				name: 'step events',
+			};
+
+			var layout = {
+				yaxis: {range: [-30, 30]}
+			};
+			
+			Plotly.newPlot(plot_div, [x_trace, y_trace, z_trace, step_trace], layout);
+			return(plot_div.data);
+		}
+		
+		//ppg
+		else if (plot_div.id === 'ppgDiv') {
+			var trace1 = {
+				x: ppg_vals[0], 
+				y: ppg_vals[1], 
+				type: 'scatter'		
+			}
+			var layout = {
+				yaxis: {range: [215, 255]}
+			};
+			Plotly.newPlot(plot_div, [trace1], layout);
+			return(plot_div.data);
+		}
+		
+		//hr
+		else if (plot_div.id === 'hrDiv') {
+			var trace1 = {
+				x: hr_vals[0], 
+				y: hr_vals[1], 
+				type: 'scatter'		
+			}
+			var layout = {
+				yaxis: {range: [50, 200]}
+			};
+			Plotly.newPlot(plot_div, [trace1], layout);
+			return(plot_div.data);
+		}
+	}
+	
+	function update_plot(plotdata, plotdiv){
+//		console.log("plotdiv: " + plotdiv.id);
+
+		//accel
+		if (plotdiv.id == 'accelDiv') {
+			
+// 			console.log("n: " + accel_vals[X_INDEX].length)
+			
+			//x trace
+			plotdata[0].x = accel_vals[TIME_INDEX];
+			plotdata[0].y = accel_vals[X_INDEX];
+			
+			//y trace
+			plotdata[1].x = accel_vals[TIME_INDEX];
+			plotdata[1].y = accel_vals[Y_INDEX];
+			
+			//z trace
+			plotdata[2].x = accel_vals[TIME_INDEX];
+			plotdata[2].y = accel_vals[Z_INDEX];
+			
+			plotdata[3].x = step_event_vals[TIME_INDEX];
+			plotdata[3].y = step_event_vals[STEP_EVENT_INDEX];
+			
+			var plotdiv  = document.getElementById('accelDiv');
+			Plotly.redraw(plotdiv);
+		}
+		
+		//ppg
+		else if (plotdiv.id == 'ppgDiv') {
+			plotdata[0].x = ppg_vals[0];
+			plotdata[0].y = ppg_vals[1];
+			var plotdiv  = document.getElementById('ppgDiv');
+			Plotly.redraw(plotdiv);
+		}
+		
+		//ppg
+		else if (plotdiv.id == 'hrDiv') {
+			plotdata[0].x = hr_vals[0];
+			plotdata[0].y = hr_vals[1];
+			var plotdiv  = document.getElementById('hrDiv');
+			Plotly.redraw(plotdiv);
+		}
+	}
+	
+//	function handle_data(
+	
+	</script>
+	<style>
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      #map {
+        height: 70%;
+        width: 70%
+      }
+    </style>
+</head>
+
+<body>
+
+<!-- <iframe src="http://localhost:5601/#/dashboard/Steps-Dashboard?embed&_a=(filters:!(),panels:!((col:1,id:Step-Count,row:1,size_x:3,size_y:2,type:visualization),(col:4,id:Average-Accel-Value-per-Step,row:1,size_x:8,size_y:2,type:visualization)),query:(query_string:(analyze_wildcard:!t,query:'user_id%20%3D%200')),title:'Steps%20Dashboard')&_g=(refreshInterval:(display:'5%20seconds',pause:!f,section:1,value:5000),time:(from:now-15m,mode:quick,to:now))" height="250" width="1000"></iframe> -->
+  
+<!-- <iframe src="http://localhost:5601/#/dashboard/Pill-Bottle-Interactions?embed&_g=(refreshInterval:(display:'5%20seconds',pause:!f,section:1,value:5000),time:(from:now%2Fd,mode:quick,to:now%2Fd))&_a=(filters:!(),panels:!((col:1,id:Bottle-Interactions,row:1,size_x:3,size_y:2,type:visualization),(col:4,id:Bottle-Interactions-Per-Hour,row:1,size_x:9,size_y:2,type:visualization)),query:(query_string:(analyze_wildcard:!t,query:'user_id%20%3D%200')),title:'Pill%20Bottle%20Interactions')" height="250" width="1000"></iframe> -->
+
+<!-- <iframe src="http://none.cs.umass.edu:5601/#/dashboard/Bottle-Interactions-Dashboard?embed&_g=(refreshInterval:(display:'5%20seconds',pause:!f,section:1,value:5000),time:(from:now-1h,mode:quick,to:now))&_a=(filters:!(),panels:!((col:1,id:Bottle-Interactions,row:1,size_x:3,size_y:2,type:visualization),(col:4,id:Bottle-Interactions-Per-Hour,row:1,size_x:8,size_y:2,type:visualization)),query:(query_string:(analyze_wildcard:!t,query:'user_id%20%3D%200')),title:'Bottle%20Interactions%20Dashboard')" height="250" width="1000"></iframe> -->
+
+<center><h2>Accelerometer</h2></center>
+<div id="accelDiv" style="width: 1000px; height: 400px;"><!-- Plotly chart will be drawn inside this DIV --></div>
+<hr>
+<center><h2>PPG</h2></center>
+<div id="ppgDiv" style="width: 1000px; height: 400px;"><!-- Plotly chart will be drawn inside this DIV --></div>
+<hr>
+<center><h2>Heart Rate</h2></center>
+<div id="hrDiv" style="width: 1000px; height: 400px;"><!-- Plotly chart will be drawn inside this DIV --></div>
+<hr>
+<center><h2>Locations</h2></center>
+<div id="map" style="margin-left: 10%;"></div>
+<div style="padding-bottom: 200px;"><!-- dummy DIV to provide empty space below the map --></div>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCX14zo7h2RbX0MlWoXEcPiEzel51YeTeg&callback=initMap"
+    async defer></script>
+
+  <script>
+	var accelPlotDiv  = document.getElementById('accelDiv');
+	var accelPlotData = init_plot(accelPlotDiv);
+
+	var ppgPlotDiv  = document.getElementById('ppgDiv');
+	var ppgPlotData = init_plot(ppgPlotDiv);
+	
+	var hrPlotDiv  = document.getElementById('hrDiv');
+	var hrPlotData = init_plot(hrPlotDiv);
+
+	setInterval(function(){ 
+		update_plot(accelPlotData, accelPlotDiv);
+		update_plot(ppgPlotData, ppgPlotDiv);
+		update_plot(hrPlotData, hrPlotDiv);
+	 	}, 50);
+
+  </script>
+
+</body>
+
+
