@@ -58,9 +58,9 @@ public class ServiceManager {
      * @see SensorService
      */
     public void stopSensorService(Class<? extends SensorService> serviceClass){
-        Intent startServiceIntent = new Intent(context, serviceClass);
-        startServiceIntent.setAction(Constants.ACTION.STOP_SERVICE);
-        context.startService(startServiceIntent);
+        Intent stopServiceIntent = new Intent(context, serviceClass);
+        stopServiceIntent.setAction(Constants.ACTION.STOP_SERVICE);
+        context.stopService(stopServiceIntent);
     }
 
     /**

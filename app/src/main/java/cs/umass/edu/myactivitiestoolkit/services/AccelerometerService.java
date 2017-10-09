@@ -11,12 +11,9 @@ import android.util.Log;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedWriter;
-
 import cs.umass.edu.myactivitiestoolkit.R;
 import cs.umass.edu.myactivitiestoolkit.constants.Constants;
 import cs.umass.edu.myactivitiestoolkit.steps.StepDetector;
-import cs.umass.edu.myactivitiestoolkit.storage.FileUtil;
 import edu.umass.cs.MHLClient.client.MessageReceiver;
 import edu.umass.cs.MHLClient.client.MobileIOClient;
 import edu.umass.cs.MHLClient.sensors.AccelerometerReading;
@@ -117,6 +114,7 @@ public class AccelerometerService extends SensorService implements SensorEventLi
 
     @Override
     protected void onServiceStopped() {
+
         broadcastMessage(Constants.MESSAGE.ACCELEROMETER_SERVICE_STOPPED);
     }
 
@@ -131,11 +129,12 @@ public class AccelerometerService extends SensorService implements SensorEventLi
                     JSONObject data = json.getJSONObject("data");
                     long timestamp = data.getLong("timestamp");
                     Log.d(TAG, "Step occurred at " + timestamp + ".");
+                    serverStepCount++;
+                    broadcastServerStepCount(serverStepCount);
+                    broadcastStepDetected(timestamp);
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
-                serverStepCount++;
-                broadcastServerStepCount(serverStepCount);
             }
         });
         mClient.registerMessageReceiver(new MessageReceiver(Constants.MHLClientFilter.ACTIVITY_DETECTED) {
@@ -172,6 +171,13 @@ public class AccelerometerService extends SensorService implements SensorEventLi
     @Override
     protected void unregisterSensors() {
         //TODO : Unregister your sensors. Make sure mSensorManager is not null before calling its unregisterListener method.
+        if (mSensorManager == null)
+            mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+
+        if (mAccelerometerSensor == null)
+            mAccelerometerSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+
+        mSensorManager.unregisterListener(this, mAccelerometerSensor);
     }
 
     @Override
@@ -230,7 +236,7 @@ public class AccelerometerService extends SensorService implements SensorEventLi
             broadcastAccelerometerReading(timestamp_in_milliseconds, event.values);
 
             //TODO: (Assignment 1) Call the detectSteps method in the StepDetector class
-            broadcastStepDetected(timestamp_in_milliseconds, event.values);
+//            broadcastStepDetected(timestamp_in_milliseconds, event.values);
 
         }else if (event.sensor.getType() == Sensor.TYPE_STEP_DETECTOR) {
 
@@ -307,10 +313,10 @@ public class AccelerometerService extends SensorService implements SensorEventLi
      * Broadcasts a step event to other application components, e.g. the main UI.
      * Use this if you would like to visualize the detected step on the accelerometer signal.
      */
-    public void broadcastStepDetected(long timestamp, float[] values) {
+    public void broadcastStepDetected(long timestamp) {
         Intent intent = new Intent();
         intent.putExtra(Constants.KEY.ACCELEROMETER_PEAK_TIMESTAMP, timestamp);
-        intent.putExtra(Constants.KEY.ACCELEROMETER_PEAK_VALUE, values);
+//        intent.putExtra(Constants.KEY.ACCELEROMETER_PEAK_VALUE, values);
         intent.setAction(Constants.ACTION.BROADCAST_ACCELEROMETER_PEAK);
         LocalBroadcastManager manager = LocalBroadcastManager.getInstance(this);
         manager.sendBroadcast(intent);

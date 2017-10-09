@@ -214,4 +214,11 @@ public abstract class SensorService extends Service implements ConnectionStateHa
         e.printStackTrace();
         Log.d(TAG, "Connection attempt failed.");
     }
+
+    @Override
+    public void onDestroy()
+    {
+        stop();
+        super.onDestroy();
+    }
 }

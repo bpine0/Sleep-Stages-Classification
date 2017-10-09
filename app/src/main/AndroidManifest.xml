@@ -34,7 +34,9 @@
         <service android:name=".services.PPGService" />
         <service android:name=".services.msband.BandService" />
 
-        <activity android:name=".view.activities.MainActivity" >
+        <activity android:name=".view.activities.MainActivity"
+            android:configChanges="orientation"
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
