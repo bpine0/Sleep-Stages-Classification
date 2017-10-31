@@ -66,6 +66,6 @@ class ExponentialFilter:
             if self.expectedValue[i] == None:
                 self.expectedValue[i] = sample[i]
             else:
-                self.expectedValue[i] += (sample[i] - expectedValue[i]) / self.smoothFactor
+                self.expectedValue[i] += (sample[i] - self.expectedValue[i]) / self.smoothFactor
 
         return self.expectedValue
