@@ -1,12 +1,20 @@
 package cs.umass.edu.myactivitiestoolkit.services;
 
+import android.app.FragmentContainer;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.Spinner;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -14,6 +22,7 @@ import org.json.JSONObject;
 import cs.umass.edu.myactivitiestoolkit.R;
 import cs.umass.edu.myactivitiestoolkit.constants.Constants;
 import cs.umass.edu.myactivitiestoolkit.steps.StepDetector;
+import cs.umass.edu.myactivitiestoolkit.view.activities.MainActivity;
 import edu.umass.cs.MHLClient.client.MessageReceiver;
 import edu.umass.cs.MHLClient.client.MobileIOClient;
 import edu.umass.cs.MHLClient.sensors.AccelerometerReading;
@@ -102,6 +111,12 @@ public class AccelerometerService extends SensorService implements SensorEventLi
      */
     private int serverStepCount = 0;
 
+    /** The spinner containing the activity label. */
+    Spinner spinner;
+
+    /** The activity label for data collection. */
+    String label = "";
+
 
     public AccelerometerService(){
         mStepDetector = new StepDetector();
@@ -110,12 +125,39 @@ public class AccelerometerService extends SensorService implements SensorEventLi
     @Override
     protected void onServiceStarted() {
         broadcastMessage(Constants.MESSAGE.ACCELEROMETER_SERVICE_STARTED);
+
+//        LayoutInflater inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
+//        View layout = inflater.inflate(R.layout.fragment_exercise, null);
+//        spinner = (Spinner)layout.findViewById(R.id.spinner_activity);
+//        spinner.setOnItemSelectedListener(this);
+
+//        Log.i(TAG, spinner.getAdapter().)
+        Log.i(TAG, "registered spinner listener");
+
+        BroadcastReceiver receiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if (intent.getAction().equals("LABEL")) {
+                    label = intent.getStringExtra("LABEL");
+                }
+            }
+        };
+
+        LocalBroadcastManager localBroadcastManager = LocalBroadcastManager.getInstance(this);
+        localBroadcastManager.registerReceiver(receiver, new IntentFilter("LABEL"));
+
     }
 
     @Override
     protected void onServiceStopped() {
 
         broadcastMessage(Constants.MESSAGE.ACCELEROMETER_SERVICE_STOPPED);
+
+//        LayoutInflater inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
+//        View layout = inflater.inflate(R.layout.fragment_exercise, null);
+//        spinner = (Spinner)layout.findViewById(R.id.spinner_activity);
+//        spinner.listener
+
     }
 
     @Override
@@ -229,8 +271,14 @@ public class AccelerometerService extends SensorService implements SensorEventLi
             // convert the timestamp to milliseconds (note this is not in Unix time)
             long timestamp_in_milliseconds = (long) ((double) event.timestamp / Constants.TIMESTAMPS.NANOSECONDS_PER_MILLISECOND);
 
-            //TODO: Send the accelerometer reading to the server
-            mClient.sendSensorReading(new AccelerometerReading(getString(R.string.mobile_health_client_user_id), "MOBILE", "", timestamp_in_milliseconds, event.values));
+            int labelInt = -1;
+            if (!(label.equals("") || label.equals("Label"))) {
+                labelInt = Integer.parseInt("" + label.charAt(0));
+            }
+            mClient.sendSensorReading(new AccelerometerReading(getString(R.string.mobile_health_client_user_id), "MOBILE", "", timestamp_in_milliseconds, labelInt, event.values));
+
+//            //TODO: Send the accelerometer reading to the server
+//            mClient.sendSensorReading(new AccelerometerReading(getString(R.string.mobile_health_client_user_id), "MOBILE", "", timestamp_in_milliseconds, event.values));
 
             //TODO: broadcast the accelerometer reading to the UI
             broadcastAccelerometerReading(timestamp_in_milliseconds, event.values);
@@ -321,4 +369,30 @@ public class AccelerometerService extends SensorService implements SensorEventLi
         LocalBroadcastManager manager = LocalBroadcastManager.getInstance(this);
         manager.sendBroadcast(intent);
     }
+
+    /**
+     * Broadcasts the step count computed by your server-side step detection algorithm
+     * to other application components, e.g. the main UI.
+     */
+    public void broadcastActivity(String activity) {
+        Intent intent = new Intent();
+        intent.putExtra(Constants.KEY.ACTIVITY, activity);
+        intent.setAction(Constants.ACTION.BROADCAST_ACTIVITY);
+        LocalBroadcastManager manager = LocalBroadcastManager.getInstance(this);
+        manager.sendBroadcast(intent);
+    }
+
+//    public void onItemSelected(AdapterView<?> parent, View view,
+//                               int pos, long id) {
+//        // An item was selected. You can retrieve the selected item using
+//        // parent.getItemAtPosition(pos)
+//
+//        label = parent.getItemAtPosition(pos).toString();
+//        Log.i(TAG, "got label " + label);
+//    }
+//
+//    public void onNothingSelected(AdapterView<?> parent) {
+//        // Another interface callback
+//        label = "";
+//    }
 }

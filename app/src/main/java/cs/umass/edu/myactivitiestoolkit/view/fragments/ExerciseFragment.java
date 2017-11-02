@@ -11,10 +11,14 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.v4.content.LocalBroadcastManager;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.CompoundButton;
+import android.widget.Spinner;
 import android.widget.Switch;
 import android.widget.TextView;
 
@@ -39,6 +43,8 @@ import cs.umass.edu.myactivitiestoolkit.constants.Constants;
 import cs.umass.edu.myactivitiestoolkit.services.AccelerometerService;
 import cs.umass.edu.myactivitiestoolkit.services.ServiceManager;
 import cs.umass.edu.myactivitiestoolkit.services.msband.BandService;
+
+import static android.content.Context.LAYOUT_INFLATER_SERVICE;
 
 /**
  * Fragment which visualizes the 3-axis accelerometer signal, displays the step count estimates and
@@ -74,7 +80,7 @@ import cs.umass.edu.myactivitiestoolkit.services.msband.BandService;
  * @see XYPlot
  * @see Fragment
  */
-public class ExerciseFragment extends Fragment {
+public class ExerciseFragment extends Fragment implements AdapterView.OnItemSelectedListener {
 
     /** Used during debugging to identify logs by class. */
     @SuppressWarnings("unused")
@@ -154,6 +160,8 @@ public class ExerciseFragment extends Fragment {
 
     /** Reference to the service manager which communicates to the {@link AccelerometerService}. **/
     private ServiceManager mServiceManager;
+
+    Spinner spinner;
 
     /**
      * The receiver listens for messages from the {@link AccelerometerService}, e.g. was the
@@ -236,6 +244,12 @@ public class ExerciseFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         this.mServiceManager = ServiceManager.getInstance(getActivity());
+
+//        LayoutInflater inflater = (LayoutInflater) getActivity().getSystemService(LAYOUT_INFLATER_SERVICE);
+//        View layout = inflater.inflate(R.layout.fragment_exercise, null);
+//        Spinner spinner = (Spinner)layout.findViewById(R.id.spinner_activity);
+//        spinner.setOnItemSelectedListener(this);
+
     }
 
     @Override
@@ -247,12 +261,30 @@ public class ExerciseFragment extends Fragment {
         txtAccelerometerReading = (TextView) view.findViewById(R.id.txtAccelerometerReading);
 
         //obtain references to the step count text fields
-        txtAndroidStepCount = (TextView) view.findViewById(R.id.txtAndroidStepCount);
-        txtLocalStepCount = (TextView) view.findViewById(R.id.txtLocalStepCount);
-        txtServerStepCount = (TextView) view.findViewById(R.id.txtServerStepCount);
+//        txtAndroidStepCount = (TextView) view.findViewById(R.id.txtAndroidStepCount);
+//        txtLocalStepCount = (TextView) view.findViewById(R.id.txtLocalStepCount);
+//        txtServerStepCount = (TextView) view.findViewById(R.id.txtServerStepCount);
 
         //obtain reference to the activity text field
         txtActivity = (TextView) view.findViewById(R.id.txtActivity);
+
+        //labels spinner
+        spinner = (Spinner)view.findViewById(R.id.spinner_activity);
+        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(getActivity(),
+                R.array.labels_array, android.R.layout.simple_spinner_item);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinner.setAdapter(adapter);
+
+        //labels spinner
+//        LayoutInflater inflater = (LayoutInflater) getActivity().getSystemService(LAYOUT_INFLATER_SERVICE);
+//        View layout = inflater.inflate(R.layout.fragment_exercise, null);
+//        spinner = (Spinner)layout.findViewById(R.id.spinner_activity);
+//        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(getActivity(),
+//                R.array.labels_array, android.R.layout.simple_spinner_item);
+//        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+//        spinner.setAdapter(adapter);
+        spinner.setOnItemSelectedListener(this);
+
 
         //obtain references to the on/off switches and handle the toggling appropriately
         switchAccelerometer = (Switch) view.findViewById(R.id.switchAccelerometer);
@@ -272,8 +304,13 @@ public class ExerciseFragment extends Fragment {
                         mServiceManager.startSensorService(AccelerometerService.class);
                     }
                 }else{
+
+                    Log.d(TAG, "found spinner");
+
                     mServiceManager.stopSensorService(AccelerometerService.class);
                     mServiceManager.stopSensorService(BandService.class);
+
+
                 }
             }
         });
@@ -359,6 +396,16 @@ public class ExerciseFragment extends Fragment {
         filter.addAction(Constants.ACTION.BROADCAST_LOCAL_STEP_COUNT);
         filter.addAction(Constants.ACTION.BROADCAST_SERVER_STEP_COUNT);
         broadcastManager.registerReceiver(receiver, filter);
+
+//        //labels spinner
+//        LayoutInflater inflater = (LayoutInflater) getActivity().getSystemService(LAYOUT_INFLATER_SERVICE);
+//        View layout = inflater.inflate(R.layout.fragment_exercise, null);
+//        spinner = (Spinner)layout.findViewById(R.id.spinner_activity);
+//        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(getActivity(),
+//                R.array.labels_array, android.R.layout.simple_spinner_item);
+//        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+//        spinner.setAdapter(adapter);
+//        spinner.setOnItemSelectedListener(this);
     }
 
     /**
@@ -471,5 +518,36 @@ public class ExerciseFragment extends Fragment {
 //        mPlot.addSeries(zSeries, mZSeriesFormatter);
 //        mPlot.addSeries(peaks, mPeakSeriesFormatter);
 //        mPlot.redraw();
+    }
+
+    @Override
+    public void onItemSelected(AdapterView<?> parent, View view,
+                               int pos, long id) {
+        // An item was selected. You can retrieve the selected item using
+        // parent.getItemAtPosition(pos)
+
+//        label = parent.getItemAtPosition(pos).toString();
+        Log.i(TAG, "got label " + parent.getItemAtPosition(pos));
+
+
+
+        Intent labelIntent = new Intent("LABEL");
+
+
+        if (pos >= 0) {
+            labelIntent.putExtra("LABEL", parent.getItemAtPosition(pos).toString());
+        } else {
+            labelIntent.putExtra("LABEL", "-1");
+        }
+
+        LocalBroadcastManager localBroadcastManager = LocalBroadcastManager.getInstance(getActivity());
+        localBroadcastManager.sendBroadcast(labelIntent);
+
+    }
+
+    public void onNothingSelected(AdapterView<?> parent) {
+        // Another interface callback
+        Log.i(TAG, "got nothing selected");
+//        label = "";
     }
 }

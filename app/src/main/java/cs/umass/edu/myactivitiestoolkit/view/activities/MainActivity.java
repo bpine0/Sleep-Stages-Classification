@@ -13,7 +13,11 @@ import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.Spinner;
 import android.widget.TextView;
 
 import cs.umass.edu.myactivitiestoolkit.R;
@@ -39,7 +43,7 @@ import cs.umass.edu.myactivitiestoolkit.view.fragments.SettingsFragment;
  *
  * @author Sean Noran
  */
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener {
 
     @SuppressWarnings("unused")
     /** used for debugging purposes */
@@ -193,6 +197,28 @@ public class MainActivity extends AppCompatActivity {
         filter.addAction(Constants.ACTION.BROADCAST_MESSAGE);
         filter.addAction(Constants.ACTION.BROADCAST_STATUS);
         broadcastManager.registerReceiver(receiver, filter);
+
+        LayoutInflater inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
+        View layout = inflater.inflate(R.layout.fragment_exercise, null);
+        Spinner spinner = (Spinner)layout.findViewById(R.id.spinner_activity);
+        spinner.setOnItemSelectedListener(this);
+    }
+
+    @Override
+    public void onItemSelected(AdapterView<?> parent, View view,
+                               int pos, long id) {
+        // An item was selected. You can retrieve the selected item using
+        // parent.getItemAtPosition(pos)
+
+//        label = parent.getItemAtPosition(pos).toString();
+        Log.i(TAG, "got label " + parent.getItemAtPosition(pos));
+    }
+
+    @Override
+    public void onNothingSelected(AdapterView<?> parent) {
+        // Another interface callback
+        Log.i(TAG, "got nothing selected");
+//        label = "";
     }
 
     @Override
