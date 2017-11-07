@@ -286,7 +286,7 @@ public class AccelerometerService extends SensorService implements SensorEventLi
             //TODO: (Assignment 1) Call the detectSteps method in the StepDetector class
 //            broadcastStepDetected(timestamp_in_milliseconds, event.values);
 
-            
+
 
         }else if (event.sensor.getType() == Sensor.TYPE_STEP_DETECTOR) {
 
