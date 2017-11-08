@@ -37,7 +37,7 @@
     <string name="speaker_initial">Speaker: None</string>
 
     <string name="heart_rate_initial">0</string>
-    <string name="activity_initial">Running</string>
+    <string name="activity_initial">Activity</string>
 
     <string name="app_package_identifier_prefix">package:</string>
     <string name="about_app_version">Version %s</string>

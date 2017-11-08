@@ -186,10 +186,10 @@ public class AccelerometerService extends SensorService implements SensorEventLi
                 try {
                     JSONObject data = json.getJSONObject("data");
                     activity = data.getString("activity");
+                    broadcastActivity(activity);
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
-                // TODO : broadcast activity to UI
             }
         });
     }
@@ -383,18 +383,4 @@ public class AccelerometerService extends SensorService implements SensorEventLi
         LocalBroadcastManager manager = LocalBroadcastManager.getInstance(this);
         manager.sendBroadcast(intent);
     }
-
-//    public void onItemSelected(AdapterView<?> parent, View view,
-//                               int pos, long id) {
-//        // An item was selected. You can retrieve the selected item using
-//        // parent.getItemAtPosition(pos)
-//
-//        label = parent.getItemAtPosition(pos).toString();
-//        Log.i(TAG, "got label " + label);
-//    }
-//
-//    public void onNothingSelected(AdapterView<?> parent) {
-//        // Another interface callback
-//        label = "";
-//    }
 }

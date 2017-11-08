@@ -226,7 +226,10 @@ public class ExerciseFragment extends Fragment implements AdapterView.OnItemSele
                 } else if (intent.getAction().equals(Constants.ACTION.BROADCAST_SERVER_STEP_COUNT)) {
                     int stepCount = intent.getIntExtra(Constants.KEY.STEP_COUNT, 0);
                     displayServerStepCount(stepCount);
-
+                } else if (intent.getAction().equals(Constants.ACTION.BROADCAST_ACTIVITY)) {
+                    String activity = intent.getStringExtra(Constants.KEY.ACTIVITY);
+                    Log.d(TAG, "Received activity : " + activity);
+                    displayActivity(activity);
                 } else if (intent.getAction().equals(Constants.ACTION.BROADCAST_ACCELEROMETER_PEAK)){
                     long timestamp = intent.getLongExtra(Constants.KEY.ACCELEROMETER_PEAK_TIMESTAMP, -1);
 //                    float[] values = intent.getFloatArrayExtra(Constants.KEY.ACCELEROMETER_PEAK_VALUE);
@@ -392,6 +395,7 @@ public class ExerciseFragment extends Fragment implements AdapterView.OnItemSele
         filter.addAction(Constants.ACTION.BROADCAST_MESSAGE);
         filter.addAction(Constants.ACTION.BROADCAST_ACCELEROMETER_DATA);
         filter.addAction(Constants.ACTION.BROADCAST_ACCELEROMETER_PEAK);
+        filter.addAction(Constants.ACTION.BROADCAST_ACTIVITY);
         filter.addAction(Constants.ACTION.BROADCAST_ANDROID_STEP_COUNT);
         filter.addAction(Constants.ACTION.BROADCAST_LOCAL_STEP_COUNT);
         filter.addAction(Constants.ACTION.BROADCAST_SERVER_STEP_COUNT);
@@ -477,6 +481,18 @@ public class ExerciseFragment extends Fragment implements AdapterView.OnItemSele
         });
     }
 
+    /**
+     * Displays the activity predicted by the server-side classifier.
+     * @param activity the current activity being performed.
+     */
+    private void displayActivity(final String activity){
+        getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                txtActivity.setText(activity);
+            }
+        });
+    }
 
 
     /**
