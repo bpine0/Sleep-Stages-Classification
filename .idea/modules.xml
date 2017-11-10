@@ -2,9 +2,10 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/CS328-A1.iml" filepath="$PROJECT_DIR$/CS328-A1.iml" />
-      <module fileurl="file://$PROJECT_DIR$/CS328-A1-update.iml" filepath="$PROJECT_DIR$/CS328-A1-update.iml" />
+      <module fileurl="file://C:\Users\pineb\StudioProjects\cs328-a2-5-goteam\CS328-A1.iml" filepath="C:\Users\pineb\StudioProjects\cs328-a2-5-goteam\CS328-A1.iml" />
+      <module fileurl="file://C:\Users\pineb\StudioProjects\cs328-a2-5-goteam\CS328-A1-update.iml" filepath="C:\Users\pineb\StudioProjects\cs328-a2-5-goteam\CS328-A1-update.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/cs328-a2-5-goteam.iml" filepath="$PROJECT_DIR$/cs328-a2-5-goteam.iml" />
     </modules>
   </component>
 </project>

@@ -51,6 +51,9 @@
 
     <string-array name="labels_array">
         <item>Label</item>
-        <item>0 - Running</item>
+        <item>0 - Sitting</item>
+        <item>1 - Walking</item>
+        <item>2 - Skipping</item>
+        <item>3 - Skateboarding</item>
     </string-array>
 </resources>
