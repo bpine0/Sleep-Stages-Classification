@@ -114,14 +114,14 @@ sys.stdout.flush()
 # We provided you with an example of plotting two features.
 # We plotted the mean X acceleration against the mean Y acceleration.
 # It should be clear from the plot that these two features are alone very uninformative.
-print("Plotting data points...")
+"""print("Plotting data points...")
 sys.stdout.flush()
 plt.figure()
 formats = ['bo', 'go']
 for i in range(0,len(y),10): # only plot 1/10th of the points, it's a lot of data!
     plt.plot(X[i,2], X[i,3], formats[int(y[i])])
     
-plt.show()
+plt.show()"""
 
 # %%---------------------------------------------------------------------------
 #
@@ -168,7 +168,7 @@ def compute_recall(conf, col):
     if col == 3:
         row2 = col-3
         row3 = col-2
-        row4 = col+1
+        row4 = col-1
 
 
     TP = float(conf[row_tp][col])
@@ -196,7 +196,7 @@ def compute_precision(conf, row):
     if row == 3:
         col2 = row-3
         col3 = row-2
-        col4 = row+1
+        col4 = row-1
 
 
     TP = float(conf[row][col_tp])
