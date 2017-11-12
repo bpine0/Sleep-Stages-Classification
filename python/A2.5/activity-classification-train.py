@@ -119,7 +119,7 @@ sys.stdout.flush()
 plt.figure()
 formats = ['bo', 'go']
 for i in range(0,len(y),10): # only plot 1/10th of the points, it's a lot of data!
-    plt.plot(X[i,0], X[i,1], formats[int(y[i])])
+    plt.plot(X[i,2], X[i,3], formats[int(y[i])])
     
 plt.show()
 
@@ -142,7 +142,9 @@ cv = cross_validation.KFold(n, n_folds=10, shuffle=False, random_state=None)
 def compute_accuracy(conf):
     r0c0 = conf[0][0]
     r1c1 = conf[1][1]
-    accuracy = float(r0c0+r1c1)/np.sum(conf)
+    r2c2 = conf[2][2]
+    r3c3 = conf[3][3]
+    accuracy = float(r0c0+r1c1+r2c2+r3c3)/np.sum(conf)
     print("accuracy: {}".format(accuracy))
     return accuracy
 
@@ -153,11 +155,24 @@ def compute_recall(conf, col):
     row_tp = col
     if col == 0:
         row2 = col+1
+        row3 = col+2
+        row4 = col+3
     if col == 1:
         row2 = col-1
+        row3 = col+1
+        row4 = col+2
+    if col == 2:
+        row2 = col-2
+        row3 = col-1
+        row4 = col+1
+    if col == 3:
+        row2 = col-3
+        row3 = col-2
+        row4 = col+1
+
 
     TP = float(conf[row_tp][col])
-    FN = float(conf[row2][col])
+    FN = float(conf[row2][col])+float(conf[row3][col])+float(conf[row4][col])
     recall = (TP)/(TP + FN) if (TP+FN !=0) else 0
     #print("recall ",conf[col_t][row], conf[col2][row], conf[col3][row])
     print("recall {}: {}").format(col, recall)
@@ -168,11 +183,24 @@ def compute_precision(conf, row):
     col_tp = row
     if row == 0:
         col2 = row+1
+        col3 = row+2
+        col4 = row+3
     if row == 1:
         col2 = row-1
+        col3 = row+1
+        col4 = row+2
+    if row == 2:
+        col2 = row-2
+        col3 = row-1
+        col4 = row+1
+    if row == 3:
+        col2 = row-3
+        col3 = row-2
+        col4 = row+1
+
 
     TP = float(conf[row][col_tp])
-    FP = float(conf[row][col2])
+    FP = float(conf[row][col2])+float(conf[row][col3])+float(conf[row][col4])
     # print(conf[var][0], conf[var][1], conf[var][2])
     precision = (TP)/(TP + FP) if (TP+FP !=0) else 0
     # print("precision: ", precision)
@@ -180,13 +208,17 @@ def compute_precision(conf, row):
     return precision
     #not correct because always left column = target
 
-fold = np.zeros([5,10])
+fold = np.zeros([9,10])
 #rows:
 #acc
 #pre 1
 #pre 2
+#pre 3
+#pre 4
 #rec 1
 #rec 2
+#rec 3
+#rec 4
 
 for i, (train_indexes, test_indexes) in enumerate(cv):
     X_train = X[train_indexes, :]
@@ -199,17 +231,17 @@ for i, (train_indexes, test_indexes) in enumerate(cv):
     y_pred = clf.predict(X_test)
 
     # show the comparison between the predicted and ground-truth labels
-    conf = confusion_matrix(y_test, y_pred, labels=[0,1])
+    conf = confusion_matrix(y_test, y_pred, labels=[0,1,2,3])
     
     print("Fold {} : The confusion matrix is :".format(i))
     print conf
     acc = compute_accuracy(conf)
     fold[0,i] = acc
-    for j in range(2):
+    for j in range(4):
         pre = compute_precision(conf, j)
         rec = compute_recall(conf,j)
         fold[1+j, i] = pre
-        fold[3+j, i] = rec
+        fold[5+j, i] = rec
 
     
     print("\n")
