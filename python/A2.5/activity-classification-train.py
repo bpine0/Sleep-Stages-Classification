@@ -81,7 +81,7 @@ time_elapsed_seconds = (data[n_samples,0] - data[0,0]) / 1000
 sampling_rate = n_samples / time_elapsed_seconds
 
 feature_names = ["Mean", "Variance", "Local Mimimum Count", "Local Maximum Count", "Range", "Magnitude of Dominant Frequency","Distance Travelled"]
-class_names = ["Sitting","Standing","Walking","Stairs"]
+class_names = ["Sitting","Walking","Standing","Stairs"]
 
 print("Extracting features and labels for window size {} and step size {}...".format(window_size, step_size))
 sys.stdout.flush()
