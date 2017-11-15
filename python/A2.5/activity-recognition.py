@@ -22,7 +22,7 @@ from features import extract_features # make sure features.py is in the same dir
 from util import reorient, reset_vars
 
 # TODO: Replace the string with your user ID
-user_id = ""
+user_id = "241hpy0yy2fuj67m"
 
 count = 0
 
@@ -50,6 +50,10 @@ def onActivityDetected(activity):
     """
     send_socket.send(json.dumps({'user_id' : user_id, 'sensor_type' : 'SENSOR_SERVER_MESSAGE', 'message' : 'ACTIVITY_DETECTED', 'data': {'activity' : activity}}) + "\n")
 
+def load(fileName):
+    with open(fileName) as f:
+        return pickle.load(f)
+
 def predict(window):
     """
     Given a window of accelerometer data, predict the activity label. 
@@ -57,11 +61,20 @@ def predict(window):
     Android must use the same feature extraction that you used to 
     train the model.
     """
-    
-    print("Buffer filled. Run your classifier.")
-    
     # TODO: Predict class label
+    print("Buffer filled. Run your classifier.")
+    clf = load("classifier.pickle")
+    prediction=clf.predict(np.reshape(extract_features(window),(1,-1)))[0]
+
+    print prediction
+    # prediction=clf.predict(extract_features(window))
+    onActivityDetected (prediction)
     
+
+    # clf = DecisionTreeClassifier(criterion="entropy", max_depth=3, max_features = None)
+    # clf.predict(window)
+    #onActivityDetected(activity)
+
     return
     
     
