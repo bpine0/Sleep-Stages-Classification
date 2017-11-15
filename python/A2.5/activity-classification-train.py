@@ -139,7 +139,7 @@ n_classes = len(class_names)
 clf = DecisionTreeClassifier(criterion="entropy", max_depth=5, max_features = 5 )
 # clfl=LogisticRegression(C=1)
 
-cv = cross_validation.KFold(n, n_folds=10, shuffle=False, random_state=None)
+cv = cross_validation.KFold(n, n_folds=10, shuffle=True, random_state=None)
 
 def compute_accuracy(conf):
     r0c0 = conf[0][0]
