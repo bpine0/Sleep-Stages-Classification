@@ -53,7 +53,7 @@
         <item>Label</item>
         <item>0 - Sitting</item>
         <item>1 - Walking</item>
-        <item>2 - Skipping</item>
+        <item>2 - Standing</item>
         <item>3 - Stairs</item>
     </string-array>
 </resources>
