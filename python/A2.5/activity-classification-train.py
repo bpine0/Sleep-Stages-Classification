@@ -35,6 +35,7 @@ from features import extract_features # make sure features.py is in the same dir
 from util import slidingWindow, reorient, reset_vars
 from sklearn import cross_validation
 from sklearn.metrics import confusion_matrix
+from sklearn.linear_model import LogisticRegression
 import pickle
 
 
@@ -135,9 +136,10 @@ n_classes = len(class_names)
 # TODO: Train and evaluate your decision tree classifier over 10-fold CV.
 # Report average accuracy, precision and recall metrics.
 
-clf = DecisionTreeClassifier(criterion="entropy", max_depth=5, max_features = None)
+clf = DecisionTreeClassifier(criterion="entropy", max_depth=5, max_features = 5 )
+# clfl=LogisticRegression(C=1)
 
-cv = cross_validation.KFold(n, n_folds=10, shuffle=False, random_state=None)
+cv = cross_validation.KFold(n, n_folds=10, shuffle=True, random_state=None)
 
 def compute_accuracy(conf):
     r0c0 = conf[0][0]
@@ -173,7 +175,7 @@ def compute_recall(conf, col):
 
     TP = float(conf[row_tp][col])
     FN = float(conf[row2][col])+float(conf[row3][col])+float(conf[row4][col])
-    recall = (TP)/(TP + FN) if (TP+FN !=0) else 0
+    recall = (TP)/(TP + FN) if (TP+FN !=0) else -5
     #print("recall ",conf[col_t][row], conf[col2][row], conf[col3][row])
     print("recall {}: {}").format(col, recall)
     return recall
@@ -202,7 +204,7 @@ def compute_precision(conf, row):
     TP = float(conf[row][col_tp])
     FP = float(conf[row][col2])+float(conf[row][col3])+float(conf[row][col4])
     # print(conf[var][0], conf[var][1], conf[var][2])
-    precision = (TP)/(TP + FP) if (TP+FP !=0) else 0
+    precision = (TP)/(TP + FP) if (TP+FP !=0) else -5
     # print("precision: ", precision)
     print("precision {}: {}").format(row, precision)
     return precision
@@ -226,9 +228,11 @@ for i, (train_indexes, test_indexes) in enumerate(cv):
     X_test = X[test_indexes, :]
     y_test = y[test_indexes]
     clf.fit(X_train, y_train)
+    # clfl.fit(X_train, y_train)
 
     # predict the labels on the test data
     y_pred = clf.predict(X_test)
+    # y_pred = clfl.predict(X_test)
 
     # show the comparison between the predicted and ground-truth labels
     conf = confusion_matrix(y_test, y_pred, labels=[0,1,2,3])
@@ -251,12 +255,12 @@ print(fold)
 print()
 print(avg_conf)
     
-# TODO: Evaluate another classifier, i.e. SVM, Logistic Regression, k-NN, etc.
+# TODO: Evaluate another c = lassifier, i.e. SVM, Logistic Regression, k-NN, etc.
     
 # TODO: Once you have collected data, train your best model on the entire 
 # dataset. Then save it to disk as follows:
 
 # when ready, set this to the best model you found, trained on all the data:
-best_classifier = None 
+best_classifier = clf
 with open('classifier.pickle', 'wb') as f: # 'wb' stands for 'write bytes'
     pickle.dump(best_classifier, f)
