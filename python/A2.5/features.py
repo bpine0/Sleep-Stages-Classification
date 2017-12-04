@@ -153,8 +153,9 @@ def distance_travelled(window):
 
     # to_return=np.array([distance_travelled_x,distance_travelled_y,distance_travelled_z])
 
-    return to_return
-
+#using mean only because will just be 1 or 2 values
+def mean_hr(window):
+    return np.mean(window, axis=0)[3]
 
 
 def extract_features(window):
@@ -169,7 +170,7 @@ def extract_features(window):
     """
     
     #x = []
-    x = np.array([compute_mean_features(window), variance(window), sum_local_min(window), sum_local_max(window), range_estimate(window), fft_max_ct(window), distance_travelled(window)])
+    x = np.array([compute_mean_features(window), variance(window), sum_local_min(window), sum_local_max(window), range_estimate(window), fft_max_ct(window), distance_travelled(window), mean_hr(window)])
     #x = np.append(x, compute_mean_features(window))
     #We can create the plots elsewhere, so it is fine if they do not pass though activity-classification-train
     #x = np.concatenate((compute_mean_features(window), variance(window), count_peaks(window), range_estimate(window), fft(window)), axis=0)
