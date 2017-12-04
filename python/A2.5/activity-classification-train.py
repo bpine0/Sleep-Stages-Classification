@@ -97,22 +97,42 @@ n_features = len(feature_names)
 X = np.zeros((0,n_features))
 y = np.zeros(0,)
 
-count = 0
+#because hr data in backwards
+count = len(hdata)-1
 for i,window_with_timestamp_and_label in slidingWindow(data, window_size, step_size):
+    #temp = np.array([1,len(window_with_timestamp_and_label)-2])
+    temp = np.zeros((1,3))
      #need to iterate through all arrays in window
     #while time at row count is under time at accel, increase count (move to next row)
-    while hdata[count][1] < [window_with_timestamp_and_label][3]: #this doesn't work. [3]
-        count=count+1
-    #remove timestamp from accel data
-    window_with_timestamp_and_label = window_with_timestamp_and_label[:, 1:-1]
-    #add hr data to accel
-    window_with_timestamp_and_label = np.append(window_with_timestamp_and_label, hdata[count][0])
-    #add in label (hr_data is on form hr, t, label)
-    window_with_timestamp_and_label = np.append(window_with_timestamp_and_label, hdata[count][2])
-    #remove time and label for feature extraction
+     #only have one window. Each row in window has own observation that needs hr
+    for row in range(len(window_with_timestamp_and_label)):
+        # print("row of window ",window_with_timestamp_and_label[row])
+        # print("checking hr_time vs accel time")
+        # print(hdata[count][1], "   ", window_with_timestamp_and_label[row][4])
+        # print(hdata[count][1] < window_with_timestamp_and_label[row][4])
+        while hdata[count][1] < window_with_timestamp_and_label[row][4]:
+            count=count-1
+            #print("changed count ", count)
+        #remove timestamps from accel data
+        #window_with_timestamp_and_label[row] = window_with_timestamp_and_label[row][:-2]
+        #temp[row]=window_with_timestamp_and_label[row][:-2]
+        temp = np.vstack((temp,window_with_timestamp_and_label[row][:-2]))
+        # print("temp ", temp)
+        #add hr data to accel
+        # window_with_timestamp_and_label[row] = np.append(window_with_timestamp_and_label[row], hdata[count][0])
+        hr_label = np.append(hdata[count][0], hdata[count][2])
+        # print("hr and activity label ", hr_label)
+        window_with_timestamp_and_label[row] = np.append(temp[row+1], hr_label)
+        # print("new row ", window_with_timestamp_and_label[row])
+        #add in label (hr_data is on form hr, t, label)
+        #window_with_timestamp_and_label[row] = np.append(window_with_timestamp_and_label[row], hdata[count][2])
+        #remove time and label for feature extraction
     window = window_with_timestamp_and_label[:,:-1]
+    #print(window)
+    # print("finished window ", window_with_timestamp_and_label)
+    # print()
     # extract features over window:
-    x = extract_features(window) #x, y, z, t  -> x, y, z, hr, label -> x, y, z, hr
+    x = extract_features(window) #x, y, z, badt, t  -> x, y, z, hr, label -> x, y, z, hr
     # append features:
     # shaoes into 1 row with unspecified number of columns (so just 1 row of n_features)
     X = np.append(X, np.reshape(x, (1,-1)), axis=0)
