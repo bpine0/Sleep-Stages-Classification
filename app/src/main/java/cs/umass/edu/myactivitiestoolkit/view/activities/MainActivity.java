@@ -13,6 +13,7 @@ import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.support.v4.app.ActivityCompat;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.View;
@@ -289,9 +290,10 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 //                    break;
 //                case Constants.NOTIFICATION_ID.PPG_SERVICE:
 //                    viewPager.setCurrentItem(PAGES.PPG_DATA.getPageNumber());
-//                    break;
+//        ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);            break;
             }
         }
+        ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
     }
 
     @Override
