@@ -5,8 +5,7 @@ Created on Tue Sep 27 13:08:49 2016
 @author: cs390mb
 
 This file is used for extracting features over windows of tri-axial accelerometer 
-data. We recommend using helper functions like _compute_mean_features(window) to 
-extract individual features.
+and heart tate data.
 
 As a side note, the underscore at the beginning of a function is a Python 
 convention indicating that the function has private access (although in reality 
@@ -24,8 +23,6 @@ def compute_mean_features(window):
     all_means = np.mean(window, axis=0)
     mag = (all_means[0]**2 + all_means[1]**2 + all_means[2]**2)**0.5
     # return np.mean(window, axis=0)
-    # print("x val: {0:.3f}".format((all_means[0]**2)))
-    # print(all_means[0]**2)
     #return np.append(all_means, mag)
     return mag
 
@@ -128,50 +125,17 @@ def fft_max_ct(window):
     #return np.append(freq_all, mag)
     return mag
 
-def distance_travelled(window):
-    all_x=np.array([])
-    all_y=np.array([])
-    all_z=np.array([])
-    for x in window:
-        all_x= np.append(all_x,x[0])
-        all_y= np.append(all_x,x[1])
-        all_z= np.append(all_x,x[2])
-
-    velocity_x= integrate.cumtrapz(all_x)
-    velocity_y= integrate.cumtrapz(all_y)
-    velocity_z= integrate.cumtrapz(all_z)
-
-    s_x=integrate.cumtrapz(velocity_x)
-    s_y=integrate.cumtrapz(velocity_y)
-    s_z=integrate.cumtrapz(velocity_z)
-
-    distance_travelled_x=(velocity_x[-1])-velocity_x[0]
-    distance_travelled_y=(velocity_y[-1])-velocity_y[0]
-    distance_travelled_z=(velocity_z[-1])-velocity_z[0]
-
-    return ((((distance_travelled_x)**2+(distance_travelled_y)**2+(distance_travelled_z)**2)**1/2))
-
-    # to_return=np.array([distance_travelled_x,distance_travelled_y,distance_travelled_z])
-
-#using mean only because will just be 1 or 2 values
+#using mean only because will just be 1 or 2 values over the whole window
 def mean_hr(window):
     return np.mean(window, axis=0)[3]
 
 
 def extract_features(window):
     """
-    Here is where you will extract your features from the data over 
-    the given window. We have given you an example of computing 
-    the mean and appending it to the feature matrix X.
-    
-    Make sure that X is an N x d matrix, where N is the number 
+        Make sure that X is an N x d matrix, where N is the number 
     of data points and d is the number of features.
     
     """
     
-    #x = []
-    x = np.array([compute_mean_features(window), variance(window), sum_local_min(window), sum_local_max(window), range_estimate(window), fft_max_ct(window), distance_travelled(window), mean_hr(window)])
-    #x = np.append(x, compute_mean_features(window))
-    #We can create the plots elsewhere, so it is fine if they do not pass though activity-classification-train
-    #x = np.concatenate((compute_mean_features(window), variance(window), count_peaks(window), range_estimate(window), fft(window)), axis=0)
+    x = np.array([compute_mean_features(window), variance(window), sum_local_min(window), sum_local_max(window), range_estimate(window), fft_max_ct(window), mean_hr(window)])
     return x

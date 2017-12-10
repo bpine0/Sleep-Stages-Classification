@@ -37,6 +37,7 @@ from sklearn import cross_validation
 from sklearn.metrics import confusion_matrix
 from sklearn.linear_model import LogisticRegression
 import pickle
+from datetime import datetime
 
 
 # %%---------------------------------------------------------------------------
@@ -47,11 +48,21 @@ import pickle
 
 print("Loading data...")
 sys.stdout.flush()
-data_file = os.path.join('data', 'accel_data-12-03-BP.csv')
-data = np.genfromtxt(data_file, delimiter=',')
+data_file = os.path.join('data', 'accel_data-12-08-BP-ss.csv')
+# date_convert = {lambda x: datetime.strptime(x.decode("utf-8"), "%d-%m-%Y %H:%M:%S")}
+#data = np.genfromtxt(data_file, delimiter=',',converters={3: date_convert})
+# data = np.genfromtxt(data_file, delimiter=',', dtype=None)
+#data = np.genfromtxt(data_file, delimiter=',', dtype = (float, float, float, '|S13'))
+#data = np.genfromtxt(data_file, delimiter=',')
+# data = np.loadtxt(data_file, delimiter=',', converters = {3:date_convert})
+data = np.loadtxt(data_file, delimiter=',', dtype = object, converters = {0: np.float, 1: np.float, 2: np.float, 3: lambda t: datetime.strptime(t.decode("utf-8"), "%d/%m/%Y %H:%M")})
+data = np.insert(data, 3, 0, axis = 1)
+#print(data)
+#print(np.shape(data))
 # same way import heart rate data
-hdata_file = os.path.join('data', 'BPM_12-03-BP-ms.csv')
-hdata = np.genfromtxt(hdata_file, delimiter=',')
+hdata_file = os.path.join('data', 'BPM_2017-12-08-BP-ss.csv')
+#hdata = np.genfromtxt(hdata_file, delimiter=',')
+hdata = np.loadtxt(hdata_file, delimiter=',', dtype = object, converters = {0: lambda t: datetime.strptime(t.decode("utf-8"), "%d/%m/%Y %H:%M"), 1: np.float, 2: np.int})
 print("Loaded {} raw labelled activity data samples.".format(len(data)))
 sys.stdout.flush()
 
@@ -61,12 +72,12 @@ sys.stdout.flush()
 #
 # -----------------------------------------------------------------------------
 
-print("Reorienting accelerometer data...")
-sys.stdout.flush()
-reset_vars()
-reoriented = np.asarray([reorient(data[i,1], data[i,2], data[i,3]) for i in range(len(data))])
-reoriented_data_with_timestamps = np.append(data[:,0:1],reoriented,axis=1)
-data = np.append(reoriented_data_with_timestamps, data[:,-1:], axis=1)
+# print("Reorienting accelerometer data...")
+# sys.stdout.flush()
+# reset_vars()
+# reoriented = np.asarray([reorient(data[i,1], data[i,2], data[i,3]) for i in range(len(data))])
+# reoriented_data_with_timestamps = np.append(data[:,0:1],reoriented,axis=1)
+# data = np.append(reoriented_data_with_timestamps, data[:,-1:], axis=1)
 
 
 # %%---------------------------------------------------------------------------
@@ -86,7 +97,7 @@ n_samples = 1000
 time_elapsed_seconds = (data[n_samples,0] - data[0,0]) / 1000
 sampling_rate = n_samples / time_elapsed_seconds
 
-feature_names = ["Mean", "Variance", "Local Mimimum Count", "Local Maximum Count", "Range", "Magnitude of Dominant Frequency","Distance Travelled", "Mean Heart Rate"]
+feature_names = ["Mean", "Variance", "Local Mimimum Count", "Local Maximum Count", "Range", "Magnitude of Dominant Frequency", "Mean Heart Rate"]
 class_names = ["Awake","Light Sleep","Deep Sleep"]
 
 print("Extracting features and labels for window size {} and step size {}...".format(window_size, step_size))
@@ -110,31 +121,34 @@ for i,window_with_timestamp_and_label in slidingWindow(data, window_size, step_s
         # print("checking hr_time vs accel time")
         # print(hdata[count][1], "   ", window_with_timestamp_and_label[row][4])
         # print(hdata[count][1] < window_with_timestamp_and_label[row][4])
-        while hdata[count][1] < window_with_timestamp_and_label[row][4]:
+        while hdata[count][0] < window_with_timestamp_and_label[row][4]:
             count=count-1
-            #print("changed count ", count)
+            print("changed count ", count)
         #remove timestamps from accel data
         #window_with_timestamp_and_label[row] = window_with_timestamp_and_label[row][:-2]
         #temp[row]=window_with_timestamp_and_label[row][:-2]
         temp = np.vstack((temp,window_with_timestamp_and_label[row][:-2]))
-        # print("temp ", temp)
+        #print("temp ", temp)
         #add hr data to accel
         # window_with_timestamp_and_label[row] = np.append(window_with_timestamp_and_label[row], hdata[count][0])
-        hr_label = np.append(hdata[count][0], hdata[count][2])
-        # print("hr and activity label ", hr_label)
+        # if np.isnan(hdata[count][0]):
+        #     hdata[count][0] = 0
+        # if np.isnan(hdata[count][2]):
+        #     hdata[count][2] = 0
+        hr_label = np.append(hdata[count][1], hdata[count][2])
+        #print("hr and activity label ", hr_label)
         window_with_timestamp_and_label[row] = np.append(temp[row+1], hr_label)
         # print("new row ", window_with_timestamp_and_label[row])
         #add in label (hr_data is on form hr, t, label)
         #window_with_timestamp_and_label[row] = np.append(window_with_timestamp_and_label[row], hdata[count][2])
         #remove time and label for feature extraction
     window = window_with_timestamp_and_label[:,:-1]
-    #print(window)
-    # print("finished window ", window_with_timestamp_and_label)
-    # print()
+    # print(window_with_timestamp_and_label)
+    # print(window)
     # extract features over window:
-    x = extract_features(window) #x, y, z, badt, t  -> x, y, z, hr, label -> x, y, z, hr
+    x = extract_features(window) #x, y, z, t (not reoriented)  -> x, y, z, heart rate, label/class -> x, y, z, hr
     # append features:
-    # shaoes into 1 row with unspecified number of columns (so just 1 row of n_features)
+    # shapes into 1 row with unspecified number of columns (so just 1 row of n_features)
     X = np.append(X, np.reshape(x, (1,-1)), axis=0)
     # append label:
     y = np.append(y, window_with_timestamp_and_label[10, -1]) #we don't know why this is 10?
