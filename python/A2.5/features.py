@@ -5,7 +5,7 @@ Created on Tue Sep 27 13:08:49 2016
 @author: cs390mb
 
 This file is used for extracting features over windows of tri-axial accelerometer 
-and heart tate data.
+and heart rate data.
 
 As a side note, the underscore at the beginning of a function is a Python 
 convention indicating that the function has private access (although in reality 
