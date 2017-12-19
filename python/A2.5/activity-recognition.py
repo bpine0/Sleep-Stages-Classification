@@ -12,192 +12,100 @@ The label is then sent back to the Android application via the server.
 
 """
 
-import socket
+
 import sys
-import json
-import threading
+
 import numpy as np
 import pickle
 from features import extract_features # make sure features.py is in the same directory
-from util import reorient, reset_vars
 
-# TODO: Replace the string with your user ID
-user_id = "241hpy0yy2fuj67m"
+import os
+from datetime import datetime
+from util import slidingWindow, reorient, reset_vars
+import matplotlib.pyplot as plt
 
-count = 0
-
-'''
-    This socket is used to send data back through the data collection server.
-    It is used to complete the authentication. It may also be used to send 
-    data or notifications back to the phone, but we will not be using that 
-    functionality in this assignment.
-'''
-send_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-send_socket.connect(("none.cs.umass.edu", 9999))
-
-# Load the classifier:
 
 with open('classifier.pickle', 'rb') as f:
     classifier = pickle.load(f)
-    
+
 if classifier == None:
     print("Classifier is null; make sure you have trained it!")
     sys.exit()
-    
-def onActivityDetected(activity):
-    """
-    Notifies the client of the current activity
-    """
-    send_socket.send(json.dumps({'user_id' : user_id, 'sensor_type' : 'SENSOR_SERVER_MESSAGE', 'message' : 'ACTIVITY_DETECTED', 'data': {'activity' : activity}}) + "\n")
+
 
 def load(fileName):
     with open(fileName) as f:
         return pickle.load(f)
 
-def predict(window):
+def predict():
     """
     Given a window of accelerometer data, predict the activity label. 
     Then use the onActivityDetected(activity) function to notify the 
     Android must use the same feature extraction that you used to 
     train the model.
     """
-    # TODO: Predict class label
-    print("Buffer filled. Run your classifier.")
+    # have to fix the window size
+    prediction_array=np.array([])
+    p_time=np.array([])
     clf = load("classifier.pickle")
-    prediction=clf.predict(np.reshape(extract_features(window),(1,-1)))[0]
+    # maybe we are not even filling buffer but just running a for loop
 
-    print prediction
-    # prediction=clf.predict(extract_features(window))
-    onActivityDetected (prediction)
-    
+    data_file_ss_11 = os.path.join('data', 'accel_data-12-08-BP-ss.csv')
+    data_ss_11 = np.loadtxt(data_file_ss_11, delimiter=',', dtype = object, converters = {0: np.float, 1: np.float, 2: np.float, 3: lambda t: datetime.strptime(t.decode("utf-8"), "%d/%m/%Y %H:%M")})
+    data_ss_11 = np.insert(data_ss_11, 3, 0, axis = 1)
+    hdata_file_ss_11 = os.path.join('data', 'BPM_2017-12-08-BP-ss.csv')
+    hdata_ss_11 = np.loadtxt(hdata_file_ss_11, delimiter=',', dtype = object, converters = {0: lambda t: datetime.strptime(t.decode("utf-8"), "%d/%m/%Y %H:%M"), 1: np.float})
 
-    # clf = DecisionTreeClassifier(criterion="entropy", max_depth=3, max_features = None)
-    # clf.predict(window)
-    #onActivityDetected(activity)
 
+    data = data_ss_11
+    hdata = hdata_ss_11
+
+
+    window_size=20
+    step_size=20
+    #because hr data in backwards
+    count = len(hdata)-1
+    for i,window_with_timestamp_and_label in slidingWindow(data, window_size, step_size):
+        temp = np.zeros((1,3))
+        #while time at row count is under time at accel, increase count (move to next row)
+        #only have one window. Each row in window has own observation that needs hr
+        for row in range(len(window_with_timestamp_and_label)):
+
+            # print (hdata[count])
+            # print(" ")
+            # print (window_with_timestamp_and_label[row])
+
+
+            while hdata[count][0] < window_with_timestamp_and_label[row][4] and count > 0:
+                count=count-1
+                print("changed count ", count)
+
+            if row==0:
+                p_time=np.append(p_time,window_with_timestamp_and_label[row][4])
+            #remove timestamps from accel data
+            temp = np.vstack((temp,window_with_timestamp_and_label[row][:-2]))
+            #add hr data to accel
+            hr_label = np.append(hdata[count][1],9)
+            window_with_timestamp_and_label[row] = np.append(temp[row+1], hr_label)
+            #add in label (hr_data is on form hr, t, label)
+            #remove time and label for feature extraction
+        window = window_with_timestamp_and_label[:,:-1]
+        # extract features over window:
+        # print("Buffer filled. Run your classifier.")
+
+        prediction=clf.predict(np.reshape(extract_features(window),(1,-1)))[0]
+        prediction_array=   np.append(prediction_array,prediction)
+        # print prediction
+
+    # for i in range(0,len(prediction_array)):
+    #     p_time=np.append(p_time,i)
+
+    plt.plot(p_time,prediction_array)
+    plt.xlabel('Time')
+    plt.ylabel('Predicted Label')
+    plt.show()
     return
-    
-    
-
-#################   Server Connection Code  ####################
-
-'''
-    This socket is used to receive data from the data collection server
-'''
-receive_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-receive_socket.connect(("none.cs.umass.edu", 8888))
-# ensures that after 1 second, a keyboard interrupt will close
-receive_socket.settimeout(1.0)
-
-msg_request_id = "ID"
-msg_authenticate = "ID,{}\n"
-msg_acknowledge_id = "ACK"
-
-def authenticate(sock):
-    """
-    Authenticates the user by performing a handshake with the data collection server.
-    
-    If it fails, it will raise an appropriate exception.
-    """
-    message = sock.recv(256).strip()
-    if (message == msg_request_id):
-        print("Received authentication request from the server. Sending authentication credentials...")
-        sys.stdout.flush()
-    else:
-        print("Authentication failed!")
-        raise Exception("Expected message {} from server, received {}".format(msg_request_id, message))
-    sock.send(msg_authenticate.format(user_id))
-
-    try:
-        message = sock.recv(256).strip()
-    except:
-        print("Authentication failed!")
-        raise Exception("Wait timed out. Failed to receive authentication response from server.")
-        
-    if (message.startswith(msg_acknowledge_id)):
-        ack_id = message.split(",")[1]
-    else:
-        print("Authentication failed!")
-        raise Exception("Expected message with prefix '{}' from server, received {}".format(msg_acknowledge_id, message))
-    
-    if (ack_id == user_id):
-        print("Authentication successful.")
-        sys.stdout.flush()
-    else:
-        print("Authentication failed!")
-        raise Exception("Authentication failed : Expected user ID '{}' from server, received '{}'".format(user_id, ack_id))
 
 
-try:
-    print("Authenticating user for receiving data...")
-    sys.stdout.flush()
-    authenticate(receive_socket)
-    
-    print("Authenticating user for sending data...")
-    sys.stdout.flush()
-    authenticate(send_socket)
-    
-    print("Successfully connected to the server! Waiting for incoming data...")
-    sys.stdout.flush()
-        
-    previous_json = ''
-    
-    sensor_data = []
-    window_size = 25 # ~1 sec assuming 25 Hz sampling rate
-    step_size = 25 # no overlap
-    index = 0 # to keep track of how many samples we have buffered so far
-    reset_vars() # resets orientation variables
-        
-    while True:
-        try:
-            message = receive_socket.recv(1024).strip()
-            json_strings = message.split("\n")
-            json_strings[0] = previous_json + json_strings[0]
-            for json_string in json_strings:
-                try:
-                    data = json.loads(json_string)
-                except:
-                    previous_json = json_string
-                    continue
-                previous_json = '' # reset if all were successful
-                sensor_type = data['sensor_type']
-                if (sensor_type == u"SENSOR_ACCEL"):
-                    t=data['data']['t']
-                    x=data['data']['x']
-                    y=data['data']['y']
-                    z=data['data']['z']
-                    
-                    sensor_data.append(reorient(x,y,z))
-                    index+=1
-                    # make sure we have exactly window_size data points :
-                    while len(sensor_data) > window_size:
-                        sensor_data.pop(0)
-                
-                    if (index >= step_size and len(sensor_data) == window_size):
-                        t = threading.Thread(target=predict, args=(np.asarray(sensor_data[:]),))
-                        t.start()
-                        index = 0
-                
-            sys.stdout.flush()
-        except KeyboardInterrupt: 
-            # occurs when the user presses Ctrl-C
-            print("User Interrupt. Quitting...")
-            break
-        except Exception as e:
-            # ignore exceptions, such as parsing the json
-            # if a connection timeout occurs, also ignore and try again. Use Ctrl-C to stop
-            # but make sure the error is displayed so we know what's going on
-            if (e.message != "timed out"):  # ignore timeout exceptions completely       
-                print(e)
-            pass
-except KeyboardInterrupt: 
-    # occurs when the user presses Ctrl-C
-    print("User Interrupt. Qutting...")
-finally:
-    print >>sys.stderr, 'closing socket for receiving data'
-    receive_socket.shutdown(socket.SHUT_RDWR)
-    receive_socket.close()
-    
-    print >>sys.stderr, 'closing socket for sending data'
-    send_socket.shutdown(socket.SHUT_RDWR)
-    send_socket.close()
+if __name__=='__main__':
+    predict()
