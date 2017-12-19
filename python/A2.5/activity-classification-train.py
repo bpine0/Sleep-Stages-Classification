@@ -48,22 +48,72 @@ from datetime import datetime
 
 print("Loading data...")
 sys.stdout.flush()
-data_file = os.path.join('data', 'accel_data-12-08-BP-ss.csv')
+data_file_sc_09 = os.path.join('data', 'accel_data-12-09-SC.csv')
 # date_convert = {lambda x: datetime.strptime(x.decode("utf-8"), "%d-%m-%Y %H:%M:%S")}
 #data = np.genfromtxt(data_file, delimiter=',',converters={3: date_convert})
 # data = np.genfromtxt(data_file, delimiter=',', dtype=None)
 #data = np.genfromtxt(data_file, delimiter=',', dtype = (float, float, float, '|S13'))
 #data = np.genfromtxt(data_file, delimiter=',')
 # data = np.loadtxt(data_file, delimiter=',', converters = {3:date_convert})
-data = np.loadtxt(data_file, delimiter=',', dtype = object, converters = {0: np.float, 1: np.float, 2: np.float, 3: lambda t: datetime.strptime(t.decode("utf-8"), "%d/%m/%Y %H:%M")})
-data = np.insert(data, 3, 0, axis = 1)
+data_sc_09 = np.loadtxt(data_file_sc_09, delimiter=',', dtype = object, converters = {0: np.float, 1: np.float, 2: np.float, 3: lambda t: datetime.strptime(t.decode("utf-8"), "%d/%m/%Y %H:%M:%S")})
+data_sc_09 = np.insert(data_sc_09, 3, 0, axis = 1)
 #print(data)
 #print(np.shape(data))
 # same way import heart rate data
-hdata_file = os.path.join('data', 'BPM_2017-12-08-BP-ss.csv')
+hdata_file_sc_09 = os.path.join('data', 'BPM_2017-12-09-SC.csv')
 #hdata = np.genfromtxt(hdata_file, delimiter=',')
-hdata = np.loadtxt(hdata_file, delimiter=',', dtype = object, converters = {0: lambda t: datetime.strptime(t.decode("utf-8"), "%d/%m/%Y %H:%M"), 1: np.float, 2: np.int})
-print("Loaded {} raw labelled activity data samples.".format(len(data)))
+hdata_sc_09 = np.loadtxt(hdata_file_sc_09, delimiter=',', dtype = object, converters = {0: lambda t: datetime.strptime(t.decode("utf-8"), "%d/%m/%Y %H:%M"), 1: np.float, 2: np.int})
+print("Loaded {} raw labelled activity data samples.".format(len(data_sc_09)))
+
+data_file_bp_08 = os.path.join('data', 'accel_data-12-08-BP-ss.csv')
+data_bp_08 = np.loadtxt(data_file_bp_08, delimiter=',', dtype = object, converters = {0: np.float, 1: np.float, 2: np.float, 3: lambda t: datetime.strptime(t.decode("utf-8"), "%d/%m/%Y %H:%M")})
+data_bp_08 = np.insert(data_bp_08, 3, 0, axis = 1)
+hdata_file_bp_08 = os.path.join('data', 'BPM_2017-12-08-BP-ss.csv')
+hdata_bp_08 = np.loadtxt(hdata_file_bp_08, delimiter=',', dtype = object, converters = {0: lambda t: datetime.strptime(t.decode("utf-8"), "%d/%m/%Y %H:%M"), 1: np.float, 2: np.int})
+print("Loaded {} raw labelled activity data samples.".format(len(data_bp_08)))
+
+# data = np.vstack((data_bp_08,data_sc_09))
+# hdata = np.vstack((hdata_bp_08, hdata_sc_09))
+
+data_file_aa_11 = os.path.join('data', 'accel_data-12-11-AA.csv')
+data_aa_11 = np.loadtxt(data_file_aa_11, delimiter=',', dtype = object, converters = {0: np.float, 1: np.float, 2: np.float, 3: lambda t: datetime.strptime(t.decode("utf-8"), "%d/%m/%Y %H:%M")})
+data_aa_11 = np.insert(data_aa_11, 3, 0, axis = 1)
+hdata_file_aa_11 = os.path.join('data', 'BPM_2017-12-11-AA.csv')
+hdata_aa_11 = np.loadtxt(hdata_file_aa_11, delimiter=',', dtype = object, converters = {0: lambda t: datetime.strptime(t.decode("utf-8"), "%d/%m/%Y %H:%M"), 1: np.float, 2: np.int})
+
+print("Loaded {} raw labelled activity data samples.".format(len(data_aa_11)))
+
+
+data_file_nm_18 = os.path.join('data', 'accel_data-12-18-NM.csv')
+data_nm_18 = np.loadtxt(data_file_nm_18, delimiter=',', dtype = object, converters = {0: np.float, 1: np.float, 2: np.float, 3: lambda t: datetime.strptime(t.decode("utf-8"), "%d/%m/%Y %H:%M:%S")})
+data_nm_18 = np.insert(data_nm_18, 3, 0, axis = 1)
+hdata_file_nm_18 = os.path.join('data', 'BPM_2017-12-18-NM.csv')
+hdata_nm_18 = np.loadtxt(hdata_file_nm_18, delimiter=',', dtype = object, converters = {0: lambda t: datetime.strptime(t.decode("utf-8"), "%H:%M %d/%m/%Y"), 1: np.float, 2: np.int})
+print("Loaded {} raw labelled activity data samples.".format(len(data_nm_18)))
+
+# data = np.vstack((data, data_aa_11))
+# hdata = np.vstack((hdata, hdata_aa_11))
+
+# data = np.vstack((data, data_nm_18))
+# hdata = np.vstack((hdata, hdata_nm_18))
+
+# print(np.shape(data_aa_11))
+# print(np.shape(data_sc_09))
+# print(np.shape(data_nm_18))
+
+
+data = np.vstack((data_sc_09, data_nm_18))
+data = np.vstack((data, data_bp_08))
+data = np.vstack((data, data_aa_11))
+
+hdata = np.vstack((hdata_sc_09, hdata_nm_18))
+hdata = np.vstack((hdata, hdata_bp_08))
+hdata = np.vstack((hdata, hdata_aa_11))
+
+
+
+
+
 sys.stdout.flush()
 
 # %%---------------------------------------------------------------------------
@@ -121,7 +171,7 @@ for i,window_with_timestamp_and_label in slidingWindow(data, window_size, step_s
         # print("checking hr_time vs accel time")
         # print(hdata[count][1], "   ", window_with_timestamp_and_label[row][4])
         # print(hdata[count][1] < window_with_timestamp_and_label[row][4])
-        while hdata[count][0] < window_with_timestamp_and_label[row][4]:
+        while hdata[count][0] < window_with_timestamp_and_label[row][4] and count > 0:
             count=count-1
             print("changed count ", count)
         #remove timestamps from accel data
@@ -302,9 +352,13 @@ for i, (train_indexes, test_indexes) in enumerate(cv):
     print("\n")
 
 avg_conf = np.mean(fold, axis = 1)
-print(fold)
-print()
-print(avg_conf)
+print("average accuracy: {0:.3f}").format(avg_conf[0])
+print("average precision awake: {0:.3f}").format(avg_conf[1])
+print("average recall awake: {0:.3f}").format(avg_conf[2])
+print("average precision light sleep: {0:.3f}").format(avg_conf[3])
+print("average recall light sleep: {0:.3f}").format(avg_conf[4])
+print("average precision deep sleep: {0:.3f}").format(avg_conf[5])
+print("average recall deep sleep: {0:.3f}").format(avg_conf[6])
     
 # TODO: Evaluate another c = lassifier, i.e. SVM, Logistic Regression, k-NN, etc.
     

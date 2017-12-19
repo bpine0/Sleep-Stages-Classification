@@ -2,9 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/SleepStages.iml" filepath="$PROJECT_DIR$/SleepStages.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Sleep-Stages-Classification.iml" filepath="$PROJECT_DIR$/Sleep-Stages-Classification.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
-      <module fileurl="file://C:\Users\pineb\StudioProjects\SleepStages\cs328-a2-5-goteam.iml" filepath="C:\Users\pineb\StudioProjects\SleepStages\cs328-a2-5-goteam.iml" />
     </modules>
   </component>
 </project>
